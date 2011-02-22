@@ -9,7 +9,7 @@ App::Rad::Plugin::ValuePriority - A Plugin to make it easy to get value from all
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =head1 Snippet
 
@@ -47,7 +47,7 @@ Version 0.01
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 Methods
 
@@ -100,12 +100,7 @@ As the name says, it return the priority order. As a arrayref
 
 sub get_priority {
    my $c = shift;
-   $c->load
-      if not defined $c
-         or ref $c ne "HASH"
-         or not exists $c->{default_value}
-         or ref $c->{default_value} ne "HASH"
-         or not exists $c->{default_value}->{priority};
+   $c->load if not exists $c->{default_value};
    $c->{default_value}->{priority};
 }
 
