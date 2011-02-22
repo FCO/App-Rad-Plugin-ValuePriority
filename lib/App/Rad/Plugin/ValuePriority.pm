@@ -13,7 +13,7 @@ Version 0.01
 
 =head1 Snippet
 
-use App::Rad qw/ValuePriority/;
+    use App::Rad qw/ValuePriority/;
 
     sub command_1 {
        my $c = shift;
@@ -100,6 +100,12 @@ As the name says, it return the priority order. As a arrayref
 
 sub get_priority {
    my $c = shift;
+   $c->load
+      if not defined $c
+         or ref $c ne "HASH"
+         or not exists $c->{default_value}
+         or ref $c->{default_value} ne "HASH"
+         or not exists $c->{default_value}->{priority};
    $c->{default_value}->{priority};
 }
 
@@ -111,12 +117,8 @@ it populate the $c->stash with the values obeying the setted order.
 
 sub to_stash {
    my $c = shift;
-   for my $func (@{ $c->{default_value}->{priority} }) {
-      my $turn = $func;
-      for my $key (keys %{ $c->$func }) {
-         next if exists $c->stash->{$key} and defined $c->stash->{$key};
-         $c->stash->{$key} = $turn->{$key} if exists $turn->{$key}
-      }
+   for my $key (keys %{ $c->value }) {
+      $c->stash->{$key} = $c->value->{$key}
    }
 }
 
@@ -130,17 +132,17 @@ sub value {
    my $c    = shift;
    my $redo = shift;
    my $ret;
-   if($redo or not exists $c->{default_value}->{"values"}) {
-      for my $func (@{ $c->{default_value}->{priority} }) {
-         my $turn = $c->$func;
-         for my $key (keys %$turn) {
-            next if exists $ret->{$key} and defined $c->stash->{$key};
-            $ret->{$key} = $turn->{$key} if exists $turn->{$key};
-         }
+
+   $c->load if not exists $c->{default_value} or not exists $c->{default_value}->{"values"};
+
+   for my $func (@{ $c->{default_value}->{priority} }) {
+      my $turn = $c->$func;
+      for my $key (keys %$turn) {
+         next if exists $ret->{$key};# and defined $c->stash->{$key};
+         $ret->{$key} = $turn->{$key} if exists $turn->{$key};
       }
-      $c->stash->{default_value}->{"values"} = $ret;
    }
-   $c->stash->{default_value}->{"values"};
+   $c->stash->{default_value}->{"values"} = $ret;
 }
 
 
